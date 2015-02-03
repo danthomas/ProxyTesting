@@ -41,6 +41,10 @@ namespace ProxyTesting
             return _when;
         }
 
+        public void Log<T1>(Action<T> action, Action<T1> log)
+        {
+        }
+
         public void Intercept(IInvocation invocation)
         {
             if (_record)
@@ -50,28 +54,29 @@ namespace ProxyTesting
             }
             else
             {
-                When<T> when = _whens.SingleOrDefault(item => item.Name == invocation.Method.Name
+                When<T> when = _whens.FirstOrDefault(item => item.Name == invocation.Method.Name
                     && ArgumentsAreEqual(item.Arguments, invocation.Arguments));
 
-                if (when == null)
+                if (when != null)
                 {
-                    throw new Exception();
+                    _whens.Remove(when);
+                    invocation.ReturnValue = when.ReturnValue;
                 }
 
-                invocation.ReturnValue = when.ReturnValue;
+
             }
         }
 
         private bool ArgumentsAreEqual(object[] lhs, object[] rhs)
         {
-            if (rhs.Length == rhs.Length)
+            if (lhs.Length != rhs.Length)
             {
                 return false;
             }
 
             for (int i = 0; i < rhs.Length; ++i)
             {
-                if (lhs[i] != rhs[i])
+                if (!lhs[i].Equals(rhs[i]))
                 {
                     return false;
                 }
@@ -84,13 +89,19 @@ namespace ProxyTesting
     public class When<T>
     {
         public string Name { get; set; }
-        public object ReturnValue { get; set; }
-        public object[] Arguments { get; set; }
+        internal object ReturnValue { get; set; }
+        internal object[] Arguments { get; set; }
 
         public When<T> Return(object returnValue)
         {
             ReturnValue = returnValue;
             return this;
         }
+    }
+
+    public class Log<T>
+    {
+        public string Name { get; set; }
+        
     }
 }
